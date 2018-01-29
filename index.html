@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Display buildings in 3D</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+        #contour {
+          text-name: '14m';
+          text-face-name: 'Open Sans Regular';
+        }
+    </style>
+</head>
+<body>
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiaHBodW9jbGFtIiwiYSI6ImNqYnlzdGMwaDM5Z3ozM3IwcHJlMndscm8ifQ.lpfloFghVwOz1bBEZBrkmQ';
+var map = new mapboxgl.Map({
+    // style: 'mapbox://styles/mapbox/streets-v9',
+    style: 'mapbox://styles/mapbox/satellite-streets-v9',
+    center: [6.9391436, 46.39469367],
+    zoom: 15.5,
+    pitch: 45,
+    bearing: -17.6,
+    hash: true,
+    container: 'map'
+});
+
+// The 'building' layer in the mapbox-streets vector source contains building-height
+// data from OpenStreetMap.
+
+map.on('load', function() {
+    // Insert the layer beneath any symbol layer.
+    var layers = map.getStyle().layers;
+
+    var labelLayerId;
+    for (var i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+            labelLayerId = layers[i].id;
+            break;
+        }
+    }
+
+    map.addLayer({
+        'id': '3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15,
+        'paint': {
+            'fill-extrusion-color': '#fff',
+
+            // use an 'interpolate' expression to add a smooth transition effect to the
+            // buildings as the user zooms in
+            'fill-extrusion-height': [
+                "interpolate", ["linear"], ["zoom"],
+                15, 0,
+                15.05, ["get", "height"]
+            ],
+            'fill-extrusion-base': [
+                "interpolate", ["linear"], ["zoom"],
+                15, 0,
+                15.05, ["get", "min_height"]
+            ],
+            'fill-extrusion-opacity': .9
+        }
+    }, labelLayerId);
+
+   
+    // map.addLayer({
+    //     "id": "terrain-data",
+    //     "type": "fill-extrusion",
+    //     "source": {
+    //         type: 'vector',
+    //         url: 'mapbox://mapbox.mapbox-terrain-v2'
+    //     },
+    //     "source-layer": "contour",
+    //     'minzoom': 8,
+    //     'paint': {
+    //         'fill-extrusion-color': '#eee',
+    //         'fill-extrusion-height': {
+    //             'type': 'identity',
+    //             'property': 'ele'
+    //         },
+    //         'fill-extrusion-opacity':.6
+    //     },
+    // },labelLayerId);
+
+});
+
+
+</script>
+
+</body>
+</html>
